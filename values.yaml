@@ -12,19 +12,6 @@ service:
   port: 9999
   targetPort: 9999  # containerPort 로 mapping됨
 
-### deployment.yaml 에서 Affinity 추가함.
-affinity:
-  nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-        - matchExpressions:
-          - key: drf.cluster
-            operator: In
-            values: ["role"]
-          - key: env
-            operator: In
-            values: ["production"]
-
 command:
   - /py/bin/uwsgi
   - --ini
@@ -45,48 +32,7 @@ securityContext:
 env:
   - name: IS_DOCKER
     value: "true"
-  - name: DB_CONN_MAX_AGE
-    value: "300"
-  - name: DB_HOST
-    value: "db.host.sh"
-  - name: DB_HOST_Prod_Monitering
-    value: "db-pord-monitoring.host.sh"
-  - name: DB_NAME
-    value: "biz"
-  - name: DB_NAME_Prod_Monitering
-    value: "shinwoo"
-  - name: DB_PASSWORD
-    value: "1q2w3e4r5*!!"
-  - name: DB_PASSWORD_Prod_Monitering
-    value: "1q2w3e4r5*!!"
-  - name: DB_PORT
-    value: "5432"
-  - name: DB_PORT_Prod_Monitering
-    value: "5432"
-  - name: DB_USER
-    value: "postgres"
-  - name: DB_USER_Prod_Monitering
-    value: "postgres"
-  - name: DJANGO_ALLOWED_HOSTS
-    value: "*"
-  - name: DJANGO_DEBUG
-    value: "1"
-  - name: DJANGO_SCREET_KEY
-    value: "django-insecure-u5ly4$2rz(#sm3$pnn)jd9thxk)zrkv#$xo&(yi3u&z_&b0iqt"
-  - name: FILE_UPLOAD_MAX_MEMORY_SIZE
-    value: "1073741824"
-  - name: IS_DOCKER
-    value: "true"
-  - name: REDIS_DB_FOR_CACHE
-    value: "1"
-  - name: REDIS_DB_FOR_CHANNEL
-    value: "0"
-  - name: REDIS_HOST
-    value: "redis.host.sh"
-  - name: REDIS_PASSWORD
-    value: "1q2w3e4r5*1q2w3e4r5*"
-  - name: REDIS_PORT
-    value: "6379"
+
 
 
 volumeMounts:
@@ -110,7 +56,18 @@ resources: {}
 #   dns-role: "true"
 
 tolerations: []
-affinity: {}
+### deployment.yaml 에서 Affinity 추가함.
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+          - key: drf.cluster
+            operator: In
+            values: ["role"]
+          - key: env
+            operator: In
+            values: ["production"]
 
 
 ### ✅ serviceaccount.yaml 용

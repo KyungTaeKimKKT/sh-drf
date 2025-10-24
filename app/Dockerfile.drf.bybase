@@ -1,0 +1,27 @@
+# =====================
+# Dockerfile.drf.bybase : Django App Image by base image
+# =====================
+FROM shinwoohipo/drf-base:1.0.0 AS app
+
+USER root
+
+# 필요 시 추가 requirements (없으면 스킵)
+COPY ./requirements.slim.txt /tmp/requirements.txt
+RUN /py/bin/pip install --no-cache-dir -r /tmp/requirements.txt || true
+
+# 소스 복사 + 소유권 지정
+COPY --chown=django:django ./uwsgi_docker /uwsgi
+COPY --chown=django:django . /shapi
+
+WORKDIR /shapi
+ENV PYTHONPATH="/shapi:$PYTHONPATH"
+ENV PATH="/uwsgi:/py/bin:$PATH"
+
+# collectstatic 실행
+# RUN python manage.py collectstatic --noinput
+
+USER django
+EXPOSE 9999
+
+### CMD는  COMPOSE에서 덮어씀
+### CMD ["/py/bin/uwsgi", "--ini", "/uwsgi/uwsgi.ini"]

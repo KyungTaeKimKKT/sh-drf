@@ -1,0 +1,40 @@
+# =====================
+# Django Base Image를 이용하여 빌드
+# docker build -f Dockerfile.base -t shinwoohipo/drf-base:1.0.0 .
+# =====================
+services:
+  api:
+    image: shinwoohipo/drf:0.1.0
+    build:
+      context: .
+      dockerfile: ./Dockerfile.drf.bybase
+
+  celery:
+    image: shinwoohipo/celery:0.1.0
+    build:
+      context: .
+      dockerfile: ./Dockerfile.celery.bybase
+
+
+# =====================
+# 아래는 base image 없이 그냥 빌드 : 사용 안함.
+# =====================
+# services:
+#   api:
+#     image: shinwoohipo/sh-intranet-api:0.6.0
+#     build:
+#       context: .
+#       dockerfile: ./Dockerfile.slim.multistage
+
+#   celery:
+#     image: shinwoohipo/sh-intranet-celery:0.6.0
+#     build:
+#       context: .
+#       dockerfile: ./Dockerfile.slim.multistage.celery
+
+  # celery_beat:
+  #   image: shinwoohipo/sh-intranet-celery-beat:0.6.0
+  #   build:
+  #     context: .
+  #     dockerfile: ./Dockerfile.slim.multistage.celerybeat
+ 

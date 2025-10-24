@@ -1,0 +1,37 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+<div class="content">
+  <h1>{{ title }}</h1>
+
+  <div style="margin-bottom:20px;">
+    <strong>Host:</strong> {{ host }} |
+    <strong>Port:</strong> {{ port }} |
+    <strong>DB:</strong> {{ db }} |
+    <strong>Total:</strong> {{ total_gb }} GB
+    <form method="post" action="clear/" style="display:inline;">{% csrf_token %}
+      <input type="submit" value="Clear Redis Cache" class="default" style="margin-left:10px;">
+    </form>
+  </div>
+
+  <table class="admin-table" style="width:100%; border-collapse:collapse;">
+    <thead>
+      <tr>
+        <th style="text-align:left; border-bottom:1px solid #ddd;">Key</th>
+        <th style="text-align:right; border-bottom:1px solid #ddd;">Memory (KB)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in data %}
+      <tr>
+        <td style="padding:4px 0;">{{ item.key }}</td>
+        <td style="text-align:right;">{{ item.size_kb }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="2" style="text-align:center;">No data</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

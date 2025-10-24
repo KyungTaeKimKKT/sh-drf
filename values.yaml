@@ -1,0 +1,154 @@
+### dns-admin/values.ymal
+replicaCount: 1
+
+image:
+  repository: shinwoohipo/drf
+  tag: "0.1.0"
+  pullPolicy: Always
+
+service:
+  name: http
+  type: ClusterIP
+  port: 9999
+  targetPort: 9999  # containerPort 로 mapping됨
+
+### deployment.yaml 에서 Affinity 추가함.
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+          - key: drf.cluster
+            operator: In
+            values: ["role"]
+          - key: env
+            operator: In
+            values: ["production"]
+
+command:
+  - /py/bin/uwsgi
+  - --ini
+  - /uwsgi/uwsgi_http.ini
+
+nfs:
+  server: nas.host.sh
+  path: /volume1/django/192.168.10.249/media
+  size: 200Gi
+
+securityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+### 별도 env.yaml 로 관리함 : update시, 붙여 넣기
+### deployment.yaml 에서 env 추가함.
+env:
+  - name: IS_DOCKER
+    value: "true"
+  - name: DB_CONN_MAX_AGE
+    value: "300"
+  - name: DB_HOST
+    value: "db.host.sh"
+  - name: DB_HOST_Prod_Monitering
+    value: "db-pord-monitoring.host.sh"
+  - name: DB_NAME
+    value: "biz"
+  - name: DB_NAME_Prod_Monitering
+    value: "shinwoo"
+  - name: DB_PASSWORD
+    value: "1q2w3e4r5*!!"
+  - name: DB_PASSWORD_Prod_Monitering
+    value: "1q2w3e4r5*!!"
+  - name: DB_PORT
+    value: "5432"
+  - name: DB_PORT_Prod_Monitering
+    value: "5432"
+  - name: DB_USER
+    value: "postgres"
+  - name: DB_USER_Prod_Monitering
+    value: "postgres"
+  - name: DJANGO_ALLOWED_HOSTS
+    value: "*"
+  - name: DJANGO_DEBUG
+    value: "1"
+  - name: DJANGO_SCREET_KEY
+    value: "django-insecure-u5ly4$2rz(#sm3$pnn)jd9thxk)zrkv#$xo&(yi3u&z_&b0iqt"
+  - name: FILE_UPLOAD_MAX_MEMORY_SIZE
+    value: "1073741824"
+  - name: IS_DOCKER
+    value: "true"
+  - name: REDIS_DB_FOR_CACHE
+    value: "1"
+  - name: REDIS_DB_FOR_CHANNEL
+    value: "0"
+  - name: REDIS_HOST
+    value: "redis.host.sh"
+  - name: REDIS_PASSWORD
+    value: "1q2w3e4r5*1q2w3e4r5*"
+  - name: REDIS_PORT
+    value: "6379"
+
+
+volumeMounts:
+  - name: uwsgi-data
+    mountPath: /tmp/uwsgi
+  - name: drf-media
+    mountPath: /shapi/media
+
+
+volumes:
+  - name: uwsgi-data
+    emptyDir: {}
+  - name: drf-media
+    persistentVolumeClaim:
+      claimName: drf-media-pvc
+
+
+resources: {}
+
+# nodeSelector:
+#   dns-role: "true"
+
+tolerations: []
+affinity: {}
+
+
+### ✅ serviceaccount.yaml 용
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+### ✅ ingress-health.yaml 용
+### ingress.yaml 에서도  true면 맨 앞단에 추가함.
+ingressHealth:
+  namePostfix: ingress-health
+  enabled: true
+
+### ✅ ingress.yaml 용
+ingress:
+  enabled: true
+  className: traefik
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+  hosts:
+    - host: drf.service.sh
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: drf
+              port:
+                number: 9999
+  tls: []
+
+### ✅ httproute.yaml 용 ==> 단순한거라, 그냥 ingress 사용함.
+httpRoute:
+  enabled: false
+
+### ✅ hpa.yaml 용
+autoscaling:
+  enabled: false
+

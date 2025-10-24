@@ -1,0 +1,63 @@
+# =====================
+# Build Stage
+# =====================
+FROM python:3.10-slim AS builder
+
+# 빌드용 패키지 설치
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    libpq-dev \
+    unixodbc-dev \
+    libglib2.0-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# requirements 복사 및 pip 패키지 설치
+COPY ./requirements.slim.txt /tmp/requirements.txt
+
+# 가상환경 생성
+RUN python -m venv /py && \
+    /py/bin/pip install --upgrade pip && \
+    /py/bin/pip install --no-cache-dir -r /tmp/requirements.txt
+
+# =====================
+# Final Stage
+# =====================
+FROM python:3.10-slim
+
+# 런타임 최소 패키지 설치
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    unixodbc \
+    libpq5 \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# 사용자 생성 (uid:1000/gid:1000 권장)
+RUN adduser --disabled-password --uid 1000 --gecos "" django
+
+# 빌드 단계에서 설치한 virtualenv 복사
+COPY --from=builder /py /py
+RUN chown -R django:django /py
+
+# 소스 코드 복사
+COPY ./uwsgi_docker /uwsgi
+COPY . /shapi
+RUN chown -R django:django /shapi
+
+WORKDIR /shapi
+
+# 환경 변수 설정
+ENV PYTHONPATH="/shapi:$PYTHONPATH"
+ENV PATH="/uwsgi:/py/bin:$PATH"
+ENV PYTHONUNBUFFERED=1
+
+# uWSGI용 socket 폴더 생성
+RUN mkdir -p /home/django/uwsgi && chown -R django:django /home/django/uwsgi
+
+USER django
+
+# 포트 노출
+EXPOSE 9999
+
+# 기본 실행 커맨드 (Compose에서 command로 덮어쓰기 가능)
+CMD ["/py/bin/uwsgi", "--ini", "/uwsgi/uwsgi.ini"]

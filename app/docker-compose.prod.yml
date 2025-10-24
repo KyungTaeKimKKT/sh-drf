@@ -1,0 +1,82 @@
+services:
+  app:
+    image: shinwoohipo/sh-intranet-api:0.6.0
+    container_name: drf
+    user: "1000:1000"
+    volumes:
+      - uwsgi_data:/tmp/uwsgi/
+      - media_data:/shapi/media
+    # command: ["/py/bin/uwsgi", "--ini", "/uwsgi/uwsgi_socket.ini"]
+
+    command: ["/py/bin/uwsgi", "--ini", "/uwsgi/uwsgi_http.ini"]
+    ports:
+      - "9999:9999"
+
+    restart: always
+
+    env_file:
+      - .env_dev
+    
+    extra_hosts:
+      - "postgresql:192.168.7.108"
+
+  celery_worker:
+    image: shinwoohipo/sh-intranet-celery:0.6.0
+    container_name: celery_worker
+    #command: /py/bin/celery -A shapi worker --loglevel=info --without-gossip --without-mingle --without-heartbeat --loglevel=ERROR
+    command: celery -A shapi worker --loglevel=ERROR -Q scheduler
+
+    volumes:
+      - media_data:/shapi/media
+
+    env_file:
+      - .env_dev
+
+    extra_hosts:
+      - "postgresql:192.168.7.108"
+
+
+  celery_beat:
+    image: shinwoohipo/sh-intranet-celery:0.6.0
+    container_name: celery_beat
+    command: celery -A shapi beat --loglevel=ERROR
+
+    volumes:
+      - media_data:/shapi/media
+      
+    env_file:
+      - .env_dev
+    
+
+    extra_hosts:
+      - "postgresql:192.168.7.108"
+
+
+
+  # nginx:
+  #   image : shinwoohipo/sh-backend-nginx
+
+  #   restart: always
+  #   volumes:
+  #     - uwsgi_data:/tmp/uwsgi/
+  #   ports:
+  #     - "9999:80"
+  #     # - "9998:9998"
+  #     # - "9997:9997"
+
+  #   depends_on: 
+  #     - app
+
+volumes:
+  uwsgi_data: 
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/kkt/uwsgi'
+  media_data:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/kkt/django-nas'

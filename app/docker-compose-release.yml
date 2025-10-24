@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  app:
+    image: shinwoohipo/sh-backend-app:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile   
+    volumes:
+      - .:/shapi
+      - uwsgi_data:/tmp/uwsgi/
+      - media_data:/vol/django/media
+    command: >
+      sh -c "cd uwsgi_docker &&
+             uwsgi --ini uwsgi.ini"
+
+    env_file:
+      - .env
+    
+    extra_hosts:
+      - "postgresql:192.168.10.249"
+
+  nginx:
+    image : shinwoohipo/sh-backend-nginx
+    build: nginx_docker/.
+    restart: always
+    volumes:
+      - uwsgi_data:/tmp/uwsgi/
+    ports:
+      - "9999:80"
+    depends_on: 
+      - app
+
+volumes:
+  uwsgi_data:
+  media_data:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/biz/django-nas'

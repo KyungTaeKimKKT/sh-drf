@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+Dockerfile*
+docker-compose*
+
+
+# Python
+
+./__pyacahe__/
+./*/__pyacahe__/
+./*/*/__pyacahe__/
+./*/*/*/__pyacahe__/
+.evn/
+.venv/
+venv/
+.env
+.env*
+venv*/
+
+### folder
+media/
+logs/
+debug/
+collectstatic/
+
+# requirements, txt
+# *.txt
+# requirements*
+
+
+#그외
+*.sh
+uwsgi.ini
+uwsgi.pid
+uwsgi.sock
+uwsgi_params

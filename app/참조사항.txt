@@ -1,0 +1,4 @@
+uwsgi --http :9999 --home /home/kkt/development/python/django-rest/sh-api/venv-sh-api --chdir /home/kkt/development/python/django-rest/sh-api/shapi --module shapi.wsgi
+
+socket 제거후, 
+uwsgi --http :9999 --ini uwsgi.ini

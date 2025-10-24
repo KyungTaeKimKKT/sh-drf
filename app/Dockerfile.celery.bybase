@@ -1,0 +1,22 @@
+# =====================
+# Dockerfile.celery.bybase : Django celery Image by base image
+# =====================
+FROM shinwoohipo/drf-base:1.0.0 AS celery
+
+USER root
+COPY ./requirements.slim.txt /tmp/requirements.txt
+RUN /py/bin/pip install --no-cache-dir -r /tmp/requirements.txt || true
+
+# COPY . /shapi
+# RUN chown -R django:django /shapi
+
+# 소스 복사 + 소유권 지정
+COPY --chown=django:django . /shapi
+
+
+WORKDIR /shapi
+ENV PYTHONPATH="/shapi:$PYTHONPATH"
+USER django
+
+### CMD는  COMPOSE에서 덮어씀
+CMD ["/py/bin/celery", "-A", "shapi", "worker", "-l", "info"]

@@ -1,0 +1,40 @@
+# =====================
+# Django Base Image
+# docker build -f Dockerfile.base -t shinwoohipo/drf-base:1.0.0 .
+# =====================
+FROM python:3.10-slim AS base
+
+# 빌드용 패키지 설치
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    libpq-dev \
+    unixodbc-dev \
+    libglib2.0-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# venv 생성 및 pip 업그레이드
+RUN python -m venv /py && /py/bin/pip install --upgrade pip
+
+# requirements 설치
+COPY ./requirements.slim.txt /tmp/requirements.txt
+RUN /py/bin/pip install --no-cache-dir -r /tmp/requirements.txt
+
+# 런타임 최소화 (필요한 라이브러리만 다시 설치)
+RUN apt-get purge -y gcc g++ libpq-dev unixodbc-dev libglib2.0-dev && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    apt-get update && apt-get install -y --no-install-recommends \
+        unixodbc \
+        libpq5 \
+        libglib2.0-0t64 && \
+    rm -rf /var/lib/apt/lists/*
+
+# 사용자 및 환경설정
+RUN adduser --disabled-password --uid 1000 --gecos "" django
+ENV PATH="/py/bin:$PATH"
+ENV PYTHONUNBUFFERED=1
+
+USER django
+WORKDIR /home/django
+# 엔트리포인트는 App 단계에서 정의

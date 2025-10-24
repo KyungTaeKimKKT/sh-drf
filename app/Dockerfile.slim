@@ -1,0 +1,47 @@
+FROM python:3.10-slim
+LABEL maintainer="kkt"
+
+ENV PYTHONUNBUFFERED 1
+ENV PYTHONPATH="/shapi:$PYTHONPATH"
+ENV PATH="/uwsgi:/py/bin:$PATH"
+
+# 필요 패키지 업데이트 및 필수 도구 설치
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    unixodbc-dev \
+    unixodbc \
+    libpq-dev \
+    libglib2.0-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# requirements 설치
+COPY ./requirements.slim.txt /tmp/requirements.txt
+
+RUN python -m venv /py && \
+    /py/bin/pip install --upgrade pip && \
+    /py/bin/pip install --no-cache-dir -r /tmp/requirements.txt
+
+# crontab 관련 흔적 제거 (옵션)
+# RUN rm -rf /py/lib/python3.10/site-packages/crontab*
+
+# 사용자 생성
+RUN adduser --disabled-password --no-create-home django
+
+# 소스 코드 복사
+COPY ./uwsgi_docker /uwsgi
+COPY . /shapi
+WORKDIR /shapi
+
+# 포트 노출
+EXPOSE 9999
+
+# 사용자 변경 (필요시)
+USER django
+
+# uwsgi 실행 명령 (주석 해제 가능)
+# CMD [ "uwsgi", "--ini", "/shapi/uwsgi_docker/uwsgi.ini" ]
+
+
+
+# CMD [ "uwsgi", "--ini", "/shapi/uwsgi_docker/uwsgi.ini" ]
